@@ -1,0 +1,3 @@
+# api_secrets.py:
+
+API_KEY_ASSEMBLYAI = "57ea7ea3435d40208709cf48c720f121"
