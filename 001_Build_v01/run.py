@@ -1,6 +1,12 @@
+# run.py
+
 import os
 import argparse
+import time
 from main import run_transcription
+
+# Get time of script run:
+start_time = time.time()
 
 # create the parser
 parser = argparse.ArgumentParser(description="Transcribe a file with AssemblyAI")

@@ -27,8 +27,6 @@ def upload(filename):
     upload_response = requests.post(upload_endpoint, headers=headers_auth_only, data=read_file(filename))
     return upload_response.json()['upload_url']
 
-
-
 # transcribe
 def transcribe(audio_url):
     transcript_request = {
@@ -38,6 +36,7 @@ def transcribe(audio_url):
     transcript_response = requests.post(transcript_endpoint, json=transcript_request, headers=headers)
     return transcript_response.json()['id']
 
+# Poll for status
         
 def poll(transcript_id):
     polling_endpoint = transcript_endpoint + '/' + transcript_id
