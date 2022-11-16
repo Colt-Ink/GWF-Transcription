@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(
-    name="assemblyai-transcribe",
+    name="GWF-Transcription",
     version="1.0.0",
     description="Transcribe a file with AssemblyAI",
     author="Colt Peterson",
     author_email="colt@colt.ink",
-    url="",
-    packages=["assemblyai-transcribe"],
+    url="https://github.com/Colt-Ink/GWF-Transcription",
+    packages=["GWF-Transcription"],
     install_requires=[
         "requests",
         "xlsxwriter",
