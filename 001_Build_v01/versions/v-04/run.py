@@ -1,6 +1,6 @@
 # run.py
 
-import os
+import sys
 import argparse
 import time
 from main import run_transcription
@@ -26,7 +26,7 @@ title = args.title
 
 # if the title is not provided, use the file name
 if not title:
-    title = os.path.splitext(os.path.basename(file_path))[0]
+    title = sys.path.splitext(sys.path.basename(file_path))[0]
 
 # create the output file path
 output_file_path = f"{title}.xlsx"

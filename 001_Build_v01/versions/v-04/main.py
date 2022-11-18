@@ -1,13 +1,9 @@
 # main.py:
 
 import requests
-import json
-import os
-import pandas as pd
+import sys
 import time
 import xlsxwriter
-import base64
-import pprint
 from tqdm import tqdm
 from api_secrets import API_KEY_ASSEMBLYAI
 
@@ -41,7 +37,7 @@ def upload_file(file_path):
     upload_response = requests.post(
         upload_endpoint,
         headers=headers_auth_only,
-        data=tqdm(read_file(file_path), total=os.path.getsize(file_path)//CHUNK_SIZE, unit="chunk")
+        data=tqdm(read_file(file_path), total=sys.path.getsize(file_path)//CHUNK_SIZE, unit="chunk")
     )
     upload_response.raise_for_status()
     return upload_response.json()["upload_url"]
