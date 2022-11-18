@@ -5,7 +5,7 @@ Transcribe a file with AssemblyAI
 ## Installation
 
 ```
-pip install assemblyai-transcribe
+copy scripts, run python main.py
 ```
 
 ## Usage
