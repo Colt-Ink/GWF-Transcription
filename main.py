@@ -169,7 +169,7 @@ if __name__ == '__main__':
     base_data = {
         "custom_spelling": [
             {"from": ["Christina"], "to": "Krystyna"},
-            {"from": ["Krin", "Corrinne", "krin", "corinne"], "to": "Corinne"},
+            {"from": ["Krin", "Corrinne", "krin", "crin", "corinne"], "to": "Corinne"},
             {"from": ["Antislock"], "to": "Anti-Slut"},
             {"from": ["anti fletching"], "to": "Anti-Slut-Shaming"},
             {"from": ["guys we fucked", "guys, we fucked"], "to": "Guys We Fucked"},
