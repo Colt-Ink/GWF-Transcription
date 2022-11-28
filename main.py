@@ -1,109 +1,19 @@
 #!/usr/bin/env python3
 import argparse
-import requests
-import os
-import time
-import logging
-import xlsxwriter
-import re
-from tqdm import tqdm
 import datetime
+import logging
+import os
+import re
+import time
 
-from api_secrets import API_KEY_ASSEMBLYAI
+import xlsxwriter
 
-upload_endpoint = "https://api.assemblyai.com/v2/upload"
-transcript_endpoint = "https://api.assemblyai.com/v2/transcript"
+import assemblyai
 
-headers_auth_only = {'authorization': API_KEY_ASSEMBLYAI}
-
-headers_json = {
-    "authorization": API_KEY_ASSEMBLYAI,
-    "content-type": "application/json"
-}
-
-CHUNK_SIZE = 5_242_880  # 5MB
-
-
-def upload_file(file_path):
-    """
-    Uploads a file to AssemblyAI with a progress bar
-    """
-
-    def read_file_with_progress(file_path):
-        with open(file_path, "rb") as f:
-            with tqdm(total=os.path.getsize(file_path),
-                      unit="B", unit_scale=True, unit_divisor=1024
-                      ) as t:
-
-                while True:
-                    data = f.read(CHUNK_SIZE)
-                    if not data:
-                        break
-                    t.update(len(data))
-                    yield data
-
-    upload_response = requests.post(
-        upload_endpoint,
-        headers=headers_auth_only,
-        data=read_file_with_progress(file_path)
-    )
-    return upload_response.json()
-
-def get_transcript(audio_url, data):
-    """
-    Gets a transcript from AssemblyAI
-    """
-    data["audio_url"] = audio_url
-    transcript_response = requests.post(
-        transcript_endpoint,
-        headers=headers_json,
-        json=data
-    )
-    return transcript_response.json()
-
-
-def poll_for_transcript(transcript_id):
-    """
-    Polls AssemblyAI for a transcript
-    """
-    while True:
-        transcript_response = requests.get(
-            transcript_endpoint + "/" + transcript_id,
-            headers=headers_json
-        )
-        transcript_response_json = transcript_response.json()
-        if transcript_response_json["status"] == "completed":
-            return transcript_response_json
-        elif transcript_response_json["status"] == "failed":
-            print(transcript_response_json)
-            raise Exception(transcript_response_json['error'])
-        elif transcript_response_json["status"] == "error":
-            print(transcript_response_json)
-            raise Exception(transcript_response_json['error'])
-        else:
-            time.sleep(30)
-            print("Checking again in 30 secs")
-            print("Elapsed time:", time.time() - start_time)
-
-
-def get_srt(transcript_id):
-    response = requests.get(f"{transcript_endpoint}/{transcript_id}/srt", headers=headers_auth_only)
-    return response.text
-
-def get_paragraphs(transcript_id):
-    paragraphs_response = requests.get(f"{transcript_endpoint}/{transcript_id}/paragraphs", headers=headers_json)
-    paragraphs_response = paragraphs_response.json()
-
-    paragraphs = []
-    for para in paragraphs_response['paragraphs']:
-        paragraphs.append(para)
-
-    return paragraphs
 
 def transcript_time_to_timecode(transcript_time):
     return datetime.datetime.fromtimestamp(transcript_time / 1000.0).strftime('%H:%M:%S:%f')[:-3]
 
-# Using the above function to replace time.strftime:
 
 def write_transcript_to_excel(transcript_json, excel_file_path):
     """
@@ -126,8 +36,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_words.write(row, 3, word["speaker"])
         worksheet_words.write(row, 4, word["text"])
         row += 1
-        
-    if transcript_json["paragraphs"]:
+
+    if transcript_json.get("paragraphs"):
         worksheet_paragraphs = workbook.add_worksheet("paragraphs")
         worksheet_paragraphs.write(0, 0, "start")
         worksheet_paragraphs.write(0, 1, "end")
@@ -151,9 +61,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
             worksheet_highlights.write(0, 3, "rank")
             row = 1
             for highlight in transcript_json["auto_highlights_result"]["results"]:
-                start = [inst["start"] for inst in highlight["timestamps"]]
-                start_timecode = [transcript_time_to_timecode(inst) for inst in start]
-                worksheet_highlights.write(row, 0, start_timecode)
+                timestamps = ','.join([transcript_time_to_timecode(inst["start"]) for inst in highlight["timestamps"]])
+                worksheet_highlights.write(row, 0, timestamps)
                 worksheet_highlights.write(row, 1, highlight["text"])
                 worksheet_highlights.write(row, 2, highlight["count"])
                 worksheet_highlights.write(row, 3, highlight["rank"])
@@ -218,14 +127,15 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
                 row += 1
             # Count the number of occurrances of each label
             worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.add_table(0, 0, row, 0, {'name': 'iab_categories', 'totals_row': True, 'columns': [{'total_function': 'count'}]})
+            worksheet_iab_categories.add_table(0, 0, row, 0, {'name': 'iab_categories', 'totals_row': True,
+                                                              'columns': [{'total_function': 'count'}]})
             # Remove duplicates
             worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.remove_duplicates(0, 0, row, 0)
+            # worksheet_iab_categories.remove_duplicates(0, 0, row, 0)
             # Remove blank rows
             worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.filter_column_list(0, [""], blank=True)
-            worksheet_iab_categories.filter_column(0, "x")
+            # worksheet_iab_categories.filter_column_list(0, [""], blank=True)
+            # worksheet_iab_categories.filter_column(0, "x")
         else:
             logging.warning("iab_categories did not succeed")
     else:
@@ -233,13 +143,16 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
 
     workbook.close()
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Transcribe a file with AssemblyAI")
     parser.add_argument("-f", "--file", help="File path to transcribe")
     parser.add_argument("-t", "--title", help="Optional: Title of output file. Defaults to name of input file basename")
     parser.add_argument("-i", "--id", help='existing transcript id')
-    parser.add_argument("-o", "--output-dir", help='Optional: Directory to write output file to. Defaults to same directory as input file.')
+    parser.add_argument("-o", "--output-dir",
+                        help='Optional: Directory to write output file to. Defaults to same directory as input file.')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     # Get time of script run:
@@ -270,28 +183,28 @@ if __name__ == '__main__':
 
     if not id_override:
         # Upload the file
-        upload_response_json = upload_file(file_path)
+        upload_response_json = assemblyai.upload_file(file_path)
         audio_url = upload_response_json["upload_url"]
         print(f"Uploaded {file_path}")
 
         # Get the transcript
-        transcript_response_json = get_transcript(audio_url, base_data)
+        transcript_response_json = assemblyai.get_transcript(audio_url, base_data)
         transcript_id = transcript_response_json["id"]
         print(f"Transcript ID: {transcript_id}")
     else:
         transcript_id = id_override
 
     print("Polling...")
-    transcript_json = poll_for_transcript(transcript_id)
+    transcript_json = assemblyai.poll_for_transcript(transcript_id)
 
     print("Getting paragraphs...")
-    transcript_json["paragraphs"] = get_paragraphs(transcript_id)
+    transcript_json["paragraphs"] = assemblyai.get_paragraphs(transcript_id)
 
     print(f"Writing {title}.xlsx")
     write_transcript_to_excel(transcript_json, f"{output_dir}/{title}.xlsx")
 
     print(f"Collecting {title}.srt")
-    srtData = get_srt(transcript_id)
+    srtData = assemblyai.get_srt(transcript_id)
     with open(f"{output_dir}/{title}.srt", "w") as f:
         f.write(srtData)
 
