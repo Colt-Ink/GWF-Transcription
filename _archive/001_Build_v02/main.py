@@ -5,7 +5,6 @@ import os
 import time
 import logging
 import xlsxwriter
-import re
 from tqdm import tqdm
 
 from api_secrets import API_KEY_ASSEMBLYAI
@@ -48,6 +47,7 @@ def upload_file(file_path):
     )
     return upload_response.json()
 
+
 def get_transcript(audio_url, data):
     """
     Gets a transcript from AssemblyAI
@@ -89,6 +89,7 @@ def get_srt(transcript_id):
     response = requests.get(f"{transcript_endpoint}/{transcript_id}/srt", headers=headers_auth_only)
     return response.text
 
+
 def get_paragraphs(transcript_id):
     paragraphs_response = requests.get(f"{transcript_endpoint}/{transcript_id}/paragraphs", headers=headers_json)
     paragraphs_response = paragraphs_response.json()
@@ -98,6 +99,7 @@ def get_paragraphs(transcript_id):
         paragraphs.append(para)
 
     return paragraphs
+
 
 def write_transcript_to_excel(transcript_json, excel_file_path):
     """
@@ -114,53 +116,41 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
     worksheet_words.write(0, 4, "text")
     row = 1
     for word in transcript_json["words"]:
-        start = word["start"]
-        end = word["end"]
-        # Convert milliseconds to timecode in the format HH:MM:SS:FF
-        start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-        end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-        worksheet_words.write(row, 0, start_timecode)
-        worksheet_words.write(row, 1, end_timecode)
+        worksheet_words.write(row, 0, word["start"])
+        worksheet_words.write(row, 1, word["end"])
         worksheet_words.write(row, 2, word["confidence"])
         worksheet_words.write(row, 3, word["speaker"])
         worksheet_words.write(row, 4, word["text"])
         row += 1
-        
-    if transcript_json["paragraphs"]:
-        worksheet_paragraphs = workbook.add_worksheet("paragraphs")
-        worksheet_paragraphs.write(0, 0, "start")
-        worksheet_paragraphs.write(0, 1, "end")
-        worksheet_paragraphs.write(0, 2, "text")
-        row = 1
-        for paragraph in transcript_json["paragraphs"]:
-            start = paragraph["start"]
-            end = paragraph["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_paragraphs.write(row, 0, start_timecode)
-            worksheet_paragraphs.write(row, 1, end_timecode)
-            worksheet_paragraphs.write(row, 2, paragraph["text"])
-            row += 1
-    else:
-        logging.warning("no paragraphs were detected")
+
+    # Write speakers
+    # worksheet_speakers = workbook.add_worksheet("speakers")
+    # worksheet_speakers.write(0, 0, "speaker_label")
+    # worksheet_speakers.write(0, 1, "start_time")
+    # worksheet_speakers.write(0, 2, "end_time")
+    # row = 1
+    # for speaker in transcript_json["speakers"]:
+    #     worksheet_speakers.write(row, 0, speaker["speaker_label"])
+    #     worksheet_speakers.write(row, 1, speaker["start_time"])
+    #     worksheet_speakers.write(row, 2, speaker["end_time"])
+    #     row += 1
 
     # Write highlights
     if transcript_json["auto_highlights"]:
         if transcript_json["auto_highlights_result"]["status"] == "success":
             worksheet_highlights = workbook.add_worksheet("highlights")
             worksheet_highlights.write(0, 0, "start")
-            worksheet_highlights.write(0, 1, "text")
-            worksheet_highlights.write(0, 2, "count")
+            worksheet_highlights.write(0, 1, "end")
+            worksheet_highlights.write(0, 2, "text")
             worksheet_highlights.write(0, 3, "rank")
             row = 1
             for highlight in transcript_json["auto_highlights_result"]["results"]:
-                start = [inst["start"] for inst in highlight["timestamps"]]
-                start_timecode = [time.strftime('%H:%M:%S:%f', time.gmtime(inst/1000)) for inst in start]
-                worksheet_highlights.write(row, 0, start_timecode)
-                worksheet_highlights.write(row, 1, highlight["text"])
-                worksheet_highlights.write(row, 2, highlight["count"])
-                worksheet_highlights.write(row, 3, highlight["rank"])
-                row += 1
+                for inst in highlight["timestamps"]:
+                    worksheet_highlights.write(row, 0, inst["start"])
+                    worksheet_highlights.write(row, 1, inst["end"])
+                    worksheet_highlights.write(row, 2, highlight["text"])
+                    worksheet_highlights.write(row, 3, highlight["rank"])
+                    row += 1
         else:
             logging.warning("auto_highlights was not successful")
     else:
@@ -176,12 +166,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_chapters.write(0, 4, "headline")
         row = 1
         for chapter in transcript_json["chapters"]:
-            start = chapter["start"]
-            end = chapter["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_chapters.write(row, 0, start_timecode)
-            worksheet_chapters.write(row, 1, end_timecode)
+            worksheet_chapters.write(row, 0, chapter["start"])
+            worksheet_chapters.write(row, 1, chapter["end"])
             worksheet_chapters.write(row, 2, chapter["summary"])
             worksheet_chapters.write(row, 3, chapter["gist"])
             worksheet_chapters.write(row, 4, chapter["headline"])
@@ -198,12 +184,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_entities.write(0, 3, "entity_type")
         row = 1
         for entity in transcript_json["entities"]:
-            start = entity["start"]
-            end = entity["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_entities.write(row, 0, start_timecode)
-            worksheet_entities.write(row, 1, end_timecode)
+            worksheet_entities.write(row, 0, entity["start"])
+            worksheet_entities.write(row, 1, entity["end"])
             worksheet_entities.write(row, 2, entity["text"])
             worksheet_entities.write(row, 3, entity["entity_type"])
             row += 1
@@ -214,43 +196,33 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
     if transcript_json["iab_categories"]:
         if transcript_json["iab_categories_result"]["status"] == "success":
             worksheet_iab_categories = workbook.add_worksheet("iab_categories")
-            worksheet_iab_categories.write(0, 0, "labels")
-            worksheet_iab_categories.write(0, 1, "count")
+            worksheet_iab_categories.write(0, 0, "start")
+            worksheet_iab_categories.write(0, 1, "end")
+            worksheet_iab_categories.write(0, 2, "text")
+            worksheet_iab_categories.write(0, 3, "labels")
             row = 1
             for iab_category in transcript_json["iab_categories_result"]["results"]:
+                worksheet_iab_categories.write(row, 0, iab_category["timestamp"]["start"])
+                worksheet_iab_categories.write(row, 1, iab_category["timestamp"]["end"])
+                worksheet_iab_categories.write(row, 2, iab_category["text"])
                 labels = ','.join([lab["label"] for lab in iab_category["labels"]])
-                # new row for each ">"
-                labels = labels.replace(">", ">\n")
-                # add space after each comma
-                labels = labels.replace(",", ", ")
-                # add space before each capital letter
-                labels = re.sub(r"([a-z])([A-Z])", r"\1 \2", labels)
-                worksheet_iab_categories.write(row, 0, labels)
+                worksheet_iab_categories.write(row, 3, labels)
                 row += 1
-            # Count the number of occurrances of each label
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.add_table(0, 0, row, 0, {'name': 'iab_categories', 'totals_row': True, 'columns': [{'total_function': 'count'}]})
-            # Remove duplicates
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.remove_duplicates(0, 0, row, 0)
-            # Remove blank rows
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.filter_column_list(0, [""], blank=True)
-            worksheet_iab_categories.filter_column(0, "x")
         else:
             logging.warning("iab_categories did not succeed")
     else:
-        logging.warning("iab_categories were not configured")
+        logging.warning("iab_categories was not configured")
 
     workbook.close()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Transcribe a file with AssemblyAI")
     parser.add_argument("-f", "--file", help="File path to transcribe")
     parser.add_argument("-t", "--title", help="Optional: Title of output file. Defaults to name of input file basename")
     parser.add_argument("-i", "--id", help='existing transcript id')
-    parser.add_argument("-o", "--output-dir", help='Optional: Directory to write output file to. Defaults to same directory as input file.')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     # Get time of script run:
@@ -260,13 +232,8 @@ if __name__ == '__main__':
     file_path = args.file
     title = args.title
     id_override = args.id
-    output_dir = args.output_dir
     if title is None:
         title = os.path.splitext(os.path.basename(file_path))[0]
-    if output_dir is None:
-        output_dir = os.path.dirname(file_path)
-    else:
-        output_dir = os.path.abspath(output_dir)
 
     # TODO: arguments can modify base_data to include more detections.
     base_data = {
@@ -296,11 +263,11 @@ if __name__ == '__main__':
     transcript_json = poll_for_transcript(transcript_id)
 
     print(f"Writing {title}.xlsx")
-    write_transcript_to_excel(transcript_json, f"{output_dir}/{title}.xlsx")
+    write_transcript_to_excel(transcript_json, f"{title}.xlsx")
 
     print(f"Collecting {title}.srt")
     srtData = get_srt(transcript_id)
-    with open(f"{output_dir}/{title}.srt", "w") as f:
+    with open(f"{title}.srt", "w") as f:
         f.write(srtData)
 
     print(f"Transcription took {time.time() - start_time} seconds")
