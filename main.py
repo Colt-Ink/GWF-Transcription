@@ -284,6 +284,9 @@ if __name__ == '__main__':
     print("Polling...")
     transcript_json = poll_for_transcript(transcript_id)
 
+    print("Getting paragraphs...")
+    transcript_json["paragraphs"] = get_paragraphs(transcript_id)
+
     print(f"Writing {title}.xlsx")
     write_transcript_to_excel(transcript_json, f"{output_dir}/{title}.xlsx")
 
