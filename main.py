@@ -7,6 +7,7 @@ import logging
 import xlsxwriter
 import re
 from tqdm import tqdm
+import datetime
 
 from api_secrets import API_KEY_ASSEMBLYAI
 
@@ -99,6 +100,11 @@ def get_paragraphs(transcript_id):
 
     return paragraphs
 
+def transcript_time_to_timecode(transcript_time):
+    return datetime.datetime.fromtimestamp(transcript_time / 1000.0).strftime('%H:%M:%S:%f')[:-3]
+
+# Using the above function to replace time.strftime:
+
 def write_transcript_to_excel(transcript_json, excel_file_path):
     """
     Writes a transcript to an Excel file
@@ -114,13 +120,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
     worksheet_words.write(0, 4, "text")
     row = 1
     for word in transcript_json["words"]:
-        start = word["start"]
-        end = word["end"]
-        # Convert milliseconds to timecode in the format HH:MM:SS:FF
-        start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-        end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-        worksheet_words.write(row, 0, start_timecode)
-        worksheet_words.write(row, 1, end_timecode)
+        worksheet_words.write(row, 0, transcript_time_to_timecode(word["start"]))
+        worksheet_words.write(row, 1, transcript_time_to_timecode(word["end"]))
         worksheet_words.write(row, 2, word["confidence"])
         worksheet_words.write(row, 3, word["speaker"])
         worksheet_words.write(row, 4, word["text"])
@@ -133,12 +134,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_paragraphs.write(0, 2, "text")
         row = 1
         for paragraph in transcript_json["paragraphs"]:
-            start = paragraph["start"]
-            end = paragraph["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_paragraphs.write(row, 0, start_timecode)
-            worksheet_paragraphs.write(row, 1, end_timecode)
+            worksheet_paragraphs.write(row, 0, transcript_time_to_timecode(paragraph["start"]))
+            worksheet_paragraphs.write(row, 1, transcript_time_to_timecode(paragraph["end"]))
             worksheet_paragraphs.write(row, 2, paragraph["text"])
             row += 1
     else:
@@ -155,7 +152,7 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
             row = 1
             for highlight in transcript_json["auto_highlights_result"]["results"]:
                 start = [inst["start"] for inst in highlight["timestamps"]]
-                start_timecode = [time.strftime('%H:%M:%S:%f', time.gmtime(inst/1000)) for inst in start]
+                start_timecode = [transcript_time_to_timecode(inst) for inst in start]
                 worksheet_highlights.write(row, 0, start_timecode)
                 worksheet_highlights.write(row, 1, highlight["text"])
                 worksheet_highlights.write(row, 2, highlight["count"])
@@ -176,12 +173,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_chapters.write(0, 4, "headline")
         row = 1
         for chapter in transcript_json["chapters"]:
-            start = chapter["start"]
-            end = chapter["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_chapters.write(row, 0, start_timecode)
-            worksheet_chapters.write(row, 1, end_timecode)
+            worksheet_chapters.write(row, 0, transcript_time_to_timecode(chapter["start"]))
+            worksheet_chapters.write(row, 1, transcript_time_to_timecode(chapter["end"]))
             worksheet_chapters.write(row, 2, chapter["summary"])
             worksheet_chapters.write(row, 3, chapter["gist"])
             worksheet_chapters.write(row, 4, chapter["headline"])
@@ -198,12 +191,8 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
         worksheet_entities.write(0, 3, "entity_type")
         row = 1
         for entity in transcript_json["entities"]:
-            start = entity["start"]
-            end = entity["end"]
-            start_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(start/1000))
-            end_timecode = time.strftime('%H:%M:%S:%f', time.gmtime(end/1000))
-            worksheet_entities.write(row, 0, start_timecode)
-            worksheet_entities.write(row, 1, end_timecode)
+            worksheet_entities.write(row, 0, transcript_time_to_timecode(entity["start"]))
+            worksheet_entities.write(row, 1, transcript_time_to_timecode(entity["end"]))
             worksheet_entities.write(row, 2, entity["text"])
             worksheet_entities.write(row, 3, entity["entity_type"])
             row += 1
