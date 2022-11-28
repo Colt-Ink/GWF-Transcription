@@ -120,14 +120,9 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
             row = 1
             label_list = []
             for iab_category in transcript_json["iab_categories_result"]["results"]:
-                labels = ','.join([lab["label"] for lab in iab_category["labels"]])
-                # new row for each ">"
-                labels = labels.replace(">", ">\n")
-                # add space after each comma
-                labels = labels.replace(",", ", ")
-                # add space before each capital letter
-                labels = re.sub(r"([a-z])([A-Z])", r"\1 \2", labels)
-                label_list.append(labels)
+                for iab_label in iab_category["labels"]:
+                    for category in str(iab_label["label"]).split(">"):
+                        label_list.append(category)
 
             counts = Counter()
             counts.update(label_list)
