@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import datetime
 import logging
 import os
 import re
@@ -13,7 +12,10 @@ import assemblyai
 
 
 def transcript_time_to_timecode(transcript_time):
-    return datetime.datetime.fromtimestamp(transcript_time / 1000.0).strftime('%H:%M:%S:%f')[:-3]
+    hours, milliseconds = divmod(transcript_time, 3600000)
+    minutes, milliseconds = divmod(milliseconds, 60000)
+    seconds = float(milliseconds) / 1000
+    return '{:02}:{:02}:{:06.3f}'.format(int(hours), int(minutes), seconds)
 
 
 def write_transcript_to_excel(transcript_json, excel_file_path):
