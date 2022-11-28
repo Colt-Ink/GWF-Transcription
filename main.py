@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import time
+from collections import Counter
 
 import xlsxwriter
 
@@ -115,6 +116,7 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
             worksheet_iab_categories.write(0, 0, "labels")
             worksheet_iab_categories.write(0, 1, "count")
             row = 1
+            label_list = []
             for iab_category in transcript_json["iab_categories_result"]["results"]:
                 labels = ','.join([lab["label"] for lab in iab_category["labels"]])
                 # new row for each ">"
@@ -123,19 +125,15 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
                 labels = labels.replace(",", ", ")
                 # add space before each capital letter
                 labels = re.sub(r"([a-z])([A-Z])", r"\1 \2", labels)
-                worksheet_iab_categories.write(row, 0, labels)
+                label_list.append(labels)
+
+            counts = Counter()
+            counts.update(label_list)
+
+            for label, count in counts.items():
+                worksheet_iab_categories.write(row, 0, label)
+                worksheet_iab_categories.write(row, 1, count)
                 row += 1
-            # Count the number of occurrances of each label
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            worksheet_iab_categories.add_table(0, 0, row, 0, {'name': 'iab_categories', 'totals_row': True,
-                                                              'columns': [{'total_function': 'count'}]})
-            # Remove duplicates
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            # worksheet_iab_categories.remove_duplicates(0, 0, row, 0)
-            # Remove blank rows
-            worksheet_iab_categories.autofilter(0, 0, row, 0)
-            # worksheet_iab_categories.filter_column_list(0, [""], blank=True)
-            # worksheet_iab_categories.filter_column(0, "x")
         else:
             logging.warning("iab_categories did not succeed")
     else:
