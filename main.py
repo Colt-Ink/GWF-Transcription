@@ -172,8 +172,13 @@ if __name__ == '__main__':
 
     # TODO: arguments can modify base_data to include more detections.
     base_data = {
-        "custom_spelling": [{"from": ["Christina"], "to": "Krystyna"}],
-        "word_boost": ["Guys We Fucked", "Corinne", "Krystyna", "sorryaboutlastnighshow@gmail.com"],
+        "custom_spelling": [
+            {"from": ["Christina"], "to": "Krystyna"},
+            {"from": ["Krin", "Corrinne", "krin", "corinne"], "to": "Corinne"},
+            {"from": ["Antislock"], "to": "Anti-Slut"},
+            {"from": ["guys we fucked", "guys, we fucked"], "to": "Guys We Fucked"},
+            ],
+        "word_boost": ["Guys We Fucked", "Corinne", "Krystyna", "sorryaboutlastnightshow@gmail.com"],
         "auto_highlights": True,
         "auto_chapters": True,
         "entity_detection": True,
