@@ -55,6 +55,8 @@ def get_transcript(audio_url, data):
         headers=headers_json,
         json=data
     )
+    if transcript_response.status_code != requests.codes.ok:
+        raise Exception(transcript_response.text)
     return transcript_response.json()
 
 
