@@ -19,14 +19,26 @@ def main(argv):
         return -1
 
     pymiere_proj, all_markers = setup_pymiere()
-    print(f"Number of markers: {all_markers.numMarkers}")
-
+    clear_markers(all_markers)
     # Iterate through all chapters in transcript_data
     for chapter in transcript_data.values():
         curMarker = all_markers.createMarker(utils.timecode_to_transcript_time(chapter["start"]))
         curMarker.comments = chapter["gist"]
+        print(f"Inserting marker: [{utils.transcript_time_to_timecode(curMarker.start.seconds)} : {curMarker.comments}]")
 
     return 0
+
+
+def clear_markers(all_markers):
+    if all_markers.numMarkers > 0:
+        print(f"Clearing markers: {all_markers.numMarkers}")
+        marker = all_markers.getFirstMarker()
+        while marker is not None:
+            all_markers.deleteMarker(marker)
+            if all_markers.numMarkers > 0:
+                marker = all_markers.getFirstMarker()
+            else:
+                marker = None
 
 
 def setup_pymiere() -> (pymiere.Application, pymiere.MarkerCollection):
