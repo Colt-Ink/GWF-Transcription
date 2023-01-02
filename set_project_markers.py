@@ -5,14 +5,15 @@ import argparse
 
 import pymiere
 from pymiere import wrappers
+import pandas as pd
+
+import utils
 
 
 def main(argv):
     args = parse_args(argv)
     file = args.file
-    transcript_data = None
-    with open(file, 'r') as openfile:
-        transcript_data = json.load(openfile)
+    transcript_data = pd.read_excel(file, sheet_name='chapters', index_col=None, header=0).transpose().to_dict()
     if transcript_data is None:
         print("unable to open json file", file=sys.stderr)
         return -1
@@ -21,8 +22,8 @@ def main(argv):
     print(f"Number of markers: {all_markers.numMarkers}")
 
     # Iterate through all chapters in transcript_data
-    for chapter in transcript_data["chapters"]:
-        curMarker = all_markers.createMarker(float(chapter["start"]))
+    for chapter in transcript_data.values():
+        curMarker = all_markers.createMarker(utils.timecode_to_transcript_time(chapter["start"]))
         curMarker.comments = chapter["gist"]
 
     return 0
