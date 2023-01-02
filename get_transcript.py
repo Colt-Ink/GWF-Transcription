@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import os
 import re
@@ -139,6 +140,12 @@ def write_transcript_to_excel(transcript_json, excel_file_path):
     workbook.close()
 
 
+def write_transcript_to_json(transcript_json, json_file_path):
+    with open(json_file_path, "w") as f:
+        json_object = json.dumps(transcript_json, indent=4)
+        f.write(json_object)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Transcribe a file with AssemblyAI")
     parser.add_argument("-f", "--file", help="File path to transcribe")
@@ -203,6 +210,9 @@ if __name__ == '__main__':
 
     print(f"Writing {title}.xlsx")
     write_transcript_to_excel(transcript_json, f"{output_dir}/{title}.xlsx")
+
+    print(f"Writing {title}.json")
+    write_transcript_to_json(transcript_json, f"{output_dir}/{title}.json")
 
     print(f"Collecting {title}.srt")
     srtData = assemblyai.get_srt(transcript_id)
