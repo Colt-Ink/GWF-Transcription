@@ -46,7 +46,7 @@ In the activated `venv`:
 ## Run script:
 
 
-    python premiere_stages.py -f <file_path> -t <title> -s 1 2 3
+    python premiere_stages.py -f <file_path> -s 1 2 3
 
 # Examples
 
