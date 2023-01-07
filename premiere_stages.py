@@ -16,12 +16,13 @@ VALID_STEPS = [1, 2, 3]
 TRANSCRIPT_CONFIG = {
         "custom_spelling": [
             {"from": ["Christina"], "to": "Krystyna"},
-            {"from": ["Krin", "Corrinne", "krin", "crin", "corinne, Karen"], "to": "Corinne"},
+            {"from": ["Krin", "Corrinne", "krin", "crin", "corinne", "Karen"], "to": "Corinne"},
             {"from": ["Antislock"], "to": "Anti-Slut"},
             {"from": ["anti fletching"], "to": "Anti-Slut-Shaming"},
             {"from": ["sorry about last night's show@gmail.com"], "to": "sorryaboutlastnightshow@gmail.com"}
             ],
         "word_boost": ["anti-slut", "anti-slut-shaming", "Guys We Fucked", "Corinne", "Krystyna", "sorryaboutlastnightshow@gmail.com"],
+        "language_code": "en_us",
         "auto_highlights": True,
         "auto_chapters": True,
         "entity_detection": True,
