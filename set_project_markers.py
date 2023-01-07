@@ -7,6 +7,7 @@ from typing import List
 
 import pandas as pd
 import pymiere
+import pymiere.wrappers as wrappers
 
 import utils
 
@@ -26,11 +27,13 @@ def main(argv):
     return 0
 
 
-def insert_chapters(all_markers: pymiere.MarkerCollection, chapters_list: List[Dict]):
+def insert_chapters(all_markers: pymiere.MarkerCollection, chapters_list: List[Dict], start_timecode=True):
     for chapter in chapters_list:
-        cur_marker = all_markers.createMarker(utils.timecode_to_transcript_time(chapter["start"]))
+        marker_seconds = utils.timecode_to_transcript_time(chapter["start"]) if start_timecode else float(chapter["start"] / 1000.0)
+        cur_marker = all_markers.createMarker(marker_seconds)
         cur_marker.comments = chapter["gist"]
-        print(f"Inserting marker: [{utils.transcript_time_to_timecode(cur_marker.start.seconds)} : {cur_marker.comments}]")
+        time_str = utils.transcript_time_to_timecode(cur_marker.start.seconds) if start_timecode else cur_marker.start.getFormatted(wrappers.time_from_seconds(marker_seconds), 100.0)
+        print(f"Inserting marker: [{time_str} : {cur_marker.comments}]")
 
 
 def clear_markers(all_markers: pymiere.MarkerCollection):
