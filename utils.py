@@ -1,5 +1,6 @@
 import os
 import tempfile
+from typing import Tuple
 
 import pymiere
 from pymiere import wrappers
@@ -18,7 +19,7 @@ def timecode_to_transcript_time(timecode: str):
     return tc.float
 
 
-def setup_pymiere() -> (pymiere.Application, pymiere.MarkerCollection):
+def setup_pymiere() -> Tuple[pymiere.Application, pymiere.MarkerCollection]:
     project_opened, sequence_active = wrappers.check_active_sequence(crash=False)
     if not project_opened:
         raise ValueError("please open a project")
