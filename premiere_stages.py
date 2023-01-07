@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 import sys
 import argparse
@@ -47,6 +48,7 @@ def main(argv):
     pymiere_proj, all_markers = utils.setup_pymiere()
     temp_audio = None
     xlsx_file = xlsx_override
+    json_file = None
     transcript_id = id_override
 
     for step in steps:
@@ -75,17 +77,34 @@ def main(argv):
             print("  -- Data ready")
             print("  -- Saving transcript.xlsx")
             xlsx_file = os.path.join(tempfile.mkdtemp(), "transcript.xlsx")
+            json_file = os.path.join(tempfile.mkdtemp(), "transcript.json")
             assemblyai.write_transcript_to_excel(transcript_json, xlsx_file)
+            assemblyai.write_transcript_to_json(transcript_json, json_file)
             print("== DONE")
         elif step == 3:
             print("== Updating Markers")
-            if xlsx_file is None:
-                print(f"xlsx_file is missing. Please include step 2 or use override")
+            processed_json = False
+            processed_xlsx = False
+            if json_file:
+                clear_markers(all_markers)
+                with open(json_file) as jf:
+                    transcript_data = json.load(jf)
+                insert_chapters(all_markers, transcript_data['chapters'], start_timecode=False)
+                processed_json = True
+            else:
+                print(f"json_file is missing. Please include step 2 or use override")
                 return -1
-            clear_markers(all_markers)
-            transcript_data = pd.read_excel(xlsx_file, sheet_name='chapters', index_col=None,
-                                            header=0).transpose().to_dict().values()
-            insert_chapters(all_markers, transcript_data)
+
+            # if xlsx_file:
+            #     clear_markers(all_markers)
+            #     transcript_data = pd.read_excel(xlsx_file, sheet_name='chapters', index_col=None,
+            #                                     header=0).transpose().to_dict().values()
+            #     insert_chapters(all_markers, transcript_data, start_timecode=True)
+            #     processed_xlsx = True
+            # else:
+            #     print(f"xlsx_file is missing. Please include step 2 or use override")
+            #     return -1
+
             print("== DONE")
     return 0
 
@@ -99,6 +118,7 @@ def parse_args(argv):
                                                                    'example: 1 2')
     parser.add_argument('--id', help='Force transcript id for step 2')
     parser.add_argument('--xlsx', help='Force xlsx file for step 3')
+    parser.add_argument('--json', help='Force json file for step 3')
     return parser.parse_args(args=argv)
 
 
