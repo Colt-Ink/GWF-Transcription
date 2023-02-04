@@ -1,3 +1,4 @@
+import http
 import json
 import logging
 import os
@@ -44,9 +45,11 @@ def upload_file(file_path):
 
     upload_response = requests.post(
         upload_endpoint,
-        headers=headers_auth_only,
+        headers=headers_json,
         data=read_file_with_progress(file_path)
     )
+    if not upload_response.ok:
+        raise Exception(upload_response.text)
     return upload_response.json()
 
 
