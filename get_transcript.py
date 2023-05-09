@@ -38,10 +38,9 @@ if __name__ == '__main__':
             {"from": ["Christina"], "to": "Krystyna"},
             {"from": ["Krin", "Corrinne", "krin", "crin", "corinne, Karen"], "to": "Corinne"},
             {"from": ["Antislock"], "to": "Anti-Slut"},
-            {"from": ["anti fletching"], "to": "Anti-Slut-Shaming"},
-            {"from": ["sorry about last night's show@gmail.com"], "to": "sorryaboutlastnightshow@gmail.com"}
+            {"from": ["anti fletching"], "to": "Anti-Slut-Shaming"}
             ],
-        "word_boost": ["anti-slut", "anti-slut-shaming", "Guys We Fucked", "Corinne", "Krystyna", "sorryaboutlastnightshow@gmail.com"],
+        "word_boost": ["anti-slut", "anti-slut-shaming", "Guys We Fucked", "Corinne", "Krystyna"],
         "auto_highlights": True,
         "auto_chapters": True,
         "entity_detection": True,
